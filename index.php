@@ -22,7 +22,7 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
         <header class="mt-5 mb-5" style="display: flex; justify-content: space-between">
             <h2>Lista Telefônica</h2>
 
-            <a href="adicionar.php" class="btn btn-primary">Adicionar Usuário</a>
+            <a href="./adicionar_usuarios.php" class="btn btn-primary">Adicionar Usuário</a>
 
         </header>
 
@@ -44,8 +44,8 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
                         <td><?php echo $usuario['nome']; ?></td>
                         <td><?php echo $usuario['telefone']; ?></td>
                         <td>
-                            <a href="editar.php?id=<?php echo $usuario['id']; ?>" class="btn btn-primary">Editar</a>
-                            <a href="excluir.php?id=<?php echo $usuario['id']; ?>" class="btn btn-danger">Excluir</a>
+                            <a href="./usuarios/editar_usuarios.php?id=<?php echo $usuario['id']; ?>" class="btn btn-primary">Editar</a>
+                            <a href="./usuarios/deletar_usuarios.php?id=<?php echo $usuario['id']; ?>" class="btn btn-danger">Excluir</a>
                         </td>
                     </tr>
                 <?php } ?>
