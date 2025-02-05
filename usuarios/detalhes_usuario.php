@@ -4,26 +4,38 @@ require_once './config_usuarios.php';
 if (isset($_GET['id'])) {
     $usuarioId = $_GET['id'];
 
-    // Consulta para obter os contatos do usuário
-    $consulta = "SELECT c.id, c.nome, c.telefone FROM contatos c 
-                 LEFT JOIN usuario_contatos uc ON c.id = uc.contato_id 
-                 WHERE uc.usuario_id = :usuario_id";
-    $stmt = $conn->prepare($consulta);
-    $stmt->execute(['usuario_id' => $usuarioId]);
-    $contatos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Consulta os dados do usuário
+    $sql = "SELECT * FROM usuarios WHERE id = :id";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':id', $usuarioId);
+    $stmt->execute();
+    $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Consultar todos os usuários disponíveis
-    $usuariosDisponiveisQuery = "SELECT id, nome, telefone FROM usuarios WHERE id != :id";
-    $usuariosDisponiveisStmt = $conn->prepare($usuariosDisponiveisQuery);
-    $usuariosDisponiveisStmt->execute(['id' => $usuarioId]);
-    $usuariosDisponiveis = $usuariosDisponiveisStmt->fetchAll(PDO::FETCH_ASSOC);
+    // Consulta os contatos do usuário
+    $sqlContatos = "
+        SELECT u.id, u.nome, u.telefone 
+        FROM usuarios u
+        INNER JOIN usuario_contatos uc ON u.id = uc.contato_id
+        WHERE uc.usuario_id = :usuario_id
+    ";
+    $stmtContatos = $conn->prepare($sqlContatos);
+    $stmtContatos->bindParam(':usuario_id', $usuarioId);
+    $stmtContatos->execute();
+    $contatos = $stmtContatos->fetchAll(PDO::FETCH_ASSOC);
 
-    // Retornar os dados como JSON
+    // Consulta todos os usuários para o select
+    $sqlUsuarios = "SELECT id, nome, telefone FROM usuarios WHERE id != :usuario_id";
+    $stmtUsuarios = $conn->prepare($sqlUsuarios);
+    $stmtUsuarios->bindParam(':usuario_id', $usuarioId);
+    $stmtUsuarios->execute();
+    $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
+
+    // Retorna os dados como JSON
     echo json_encode([
+        'nome' => $usuario['nome'],
+        'telefone' => $usuario['telefone'],
         'contatos' => $contatos,
-        'usuariosDisponiveis' => $usuariosDisponiveis
+        'usuarios' => $usuarios
     ]);
-} else {
-    echo json_encode(['error' => 'ID de usuário não encontrado']);
 }
 ?>
