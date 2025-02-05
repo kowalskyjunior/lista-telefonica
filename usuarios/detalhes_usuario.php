@@ -1,41 +1,44 @@
 <?php
-require_once './config_usuarios.php';
+require_once '../usuarios/config_usuarios.php';
 
 if (isset($_GET['id'])) {
-    $usuarioId = $_GET['id'];
+    $usuario_id = $_GET['id'];
 
-    // Consulta os dados do usuário
-    $sql = "SELECT * FROM usuarios WHERE id = :id";
-    $stmt = $conn->prepare($sql);
-    $stmt->bindParam(':id', $usuarioId);
+    // Consulta usuário
+    $stmt = $conn->prepare("SELECT * FROM usuarios WHERE id = :id");
+    $stmt->bindParam(':id', $usuario_id);
     $stmt->execute();
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Consulta os contatos do usuário
-    $sqlContatos = "
+    if (!$usuario) {
+        echo json_encode(['success' => false, 'message' => 'Usuário não encontrado']);
+        exit;
+    }
+
+    // Consulta contatos do usuário
+    $stmt = $conn->prepare("
         SELECT u.id, u.nome, u.telefone 
-        FROM usuarios u
-        INNER JOIN usuario_contatos uc ON u.id = uc.contato_id
-        WHERE uc.usuario_id = :usuario_id
-    ";
-    $stmtContatos = $conn->prepare($sqlContatos);
-    $stmtContatos->bindParam(':usuario_id', $usuarioId);
-    $stmtContatos->execute();
-    $contatos = $stmtContatos->fetchAll(PDO::FETCH_ASSOC);
+        FROM usuario_contatos uc 
+        JOIN usuarios u ON uc.contato_id = u.id 
+        WHERE uc.usuario_id = :id
+    ");
+    $stmt->bindParam(':id', $usuario_id);
+    $stmt->execute();
+    $contatos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Consulta todos os usuários para o select
-    $sqlUsuarios = "SELECT id, nome, telefone FROM usuarios WHERE id != :usuario_id";
-    $stmtUsuarios = $conn->prepare($sqlUsuarios);
-    $stmtUsuarios->bindParam(':usuario_id', $usuarioId);
-    $stmtUsuarios->execute();
-    $usuarios = $stmtUsuarios->fetchAll(PDO::FETCH_ASSOC);
+    // Consulta usuários disponíveis para adicionar
+    $stmt = $conn->prepare("SELECT id, nome, telefone FROM usuarios WHERE id != :id");
+    $stmt->bindParam(':id', $usuario_id);
+    $stmt->execute();
+    $usuarios_disponiveis = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Retorna os dados como JSON
     echo json_encode([
+        'success' => true,
+        'id' => $usuario_id,
         'nome' => $usuario['nome'],
         'telefone' => $usuario['telefone'],
         'contatos' => $contatos,
-        'usuarios' => $usuarios
+        'usuarios' => $usuarios_disponiveis
     ]);
 }
 ?>

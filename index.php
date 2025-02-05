@@ -110,31 +110,29 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
                 $(".usuario-nome").click(function() {
                     let userId = $(this).data("id");
 
-                    // Requisição AJAX para carregar os detalhes do usuário
                     $.ajax({
-                        url: "usuarios/detalhes_usuario.php", // Arquivo que retorna os detalhes do usuário
+                        url: "usuarios/detalhes_usuario.php",
                         type: "GET",
                         data: {
                             id: userId
                         },
                         dataType: "json",
                         success: function(response) {
-                            // Atualiza o conteúdo da modal com os dados do usuário
                             $("#detalheNome").text(response.nome);
+                            $("#detalheNome").data("id", response.id);
                             $("#detalheTelefone").text(response.telefone);
 
-                            // Limpa e preenche a lista de contatos
+                            // Limpa a lista de contatos
                             $("#listaContatos").empty();
                             if (response.contatos.length > 0) {
                                 response.contatos.forEach(function(contato) {
-                                    let contatoHtml = `<li class="list-group-item">${contato.nome} - ${contato.telefone}</li>`;
-                                    $("#listaContatos").append(contatoHtml);
+                                    $("#listaContatos").append(`<li class="list-group-item">${contato.nome} - ${contato.telefone}</li>`);
                                 });
                             } else {
                                 $("#listaContatos").append("<li class='list-group-item text-muted'>Nenhum contato encontrado</li>");
                             }
 
-                            // Preenche o select com os usuários disponíveis
+                            // Popular select de adicionar contato
                             let selectHtml = "<option value=''>Selecione um contato</option>";
                             response.usuarios.forEach(function(usuario) {
                                 selectHtml += `<option value="${usuario.id}">${usuario.nome} - ${usuario.telefone}</option>`;
@@ -149,52 +147,45 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
                         }
                     });
                 });
+            });
 
-                // Evento de adicionar contato
-                $("#salvarContato").click(function() {
-                    let usuarioId = $("#detalheNome").data("id"); // ID do usuário
-                    let contatoId = $("#novoContato").val(); // ID do contato selecionado
 
-                    console.log("Enviando dados para o servidor:", usuarioId, contatoId); // Verifica se contatoId e usuarioId são válidos
+            // Evento de adicionar contato
+            $("#salvarContato").click(function() {
+                let usuarioId = $("#detalheNome").data("id");
+                let contatoId = $("#novoContato").val();
 
-                    if (contatoId && usuarioId) { // Verifique se os dois valores estão definidos
-                        // Requisição AJAX para adicionar o contato
-                        $.ajax({
-                            url: "usuarios/adicionar_contato.php", // Arquivo PHP que lida com a inserção de contato
-                            type: "POST",
-                            data: {
-                                usuario_id: usuarioId,
-                                contato_id: contatoId
-                            },
-                            success: function(response) {
-                                console.log("Resposta do servidor:", response); // Log da resposta
-                                try {
-                                    response = JSON.parse(response); // Certifique-se de que a resposta seja um objeto JSON
-                                    if (response.success) {
-                                        // Atualiza a lista de contatos na modal
-                                        $(".usuario-nome[data-id='" + usuarioId + "']").click();
-                                    } else {
-                                        alert("Erro ao adicionar o contato: " + response.message);
-                                    }
-                                } catch (e) {
-                                    alert("Erro ao processar a resposta do servidor.");
-                                }
-                            },
-                            error: function() {
-                                alert("Erro ao adicionar o contato.");
-                            }
-                        });
-                    } else {
-                        alert("Selecione um contato para adicionar.");
+                if (!contatoId) {
+                    alert("Selecione um contato.");
+                    return;
+                }
+
+                $.ajax({
+                    url: "usuarios/adicionar_contato.php",
+                    type: "POST",
+                    data: {
+                        usuario_id: usuarioId,
+                        contato_id: contatoId
+                    },
+                    success: function(response) {
+                        response = JSON.parse(response);
+                        if (response.success) {
+                            $(".usuario-nome[data-id='" + usuarioId + "']").click();
+                        } else {
+                            alert("Erro: " + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert("Erro ao adicionar o contato.");
                     }
                 });
-
-
-
-
-                $("#novoContato").html(selectHtml);
-
             });
+
+
+
+
+
+            $("#novoContato").html(selectHtml);
         </script>
 
         <script>
