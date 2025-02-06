@@ -56,7 +56,6 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
             </tbody>
         </table>
 
-
         <!-- Modal de Detalhes do Usuário -->
         <div class="modal fade" id="detalhesUsuarioModal" tabindex="-1" aria-labelledby="detalhesUsuarioModalLabel" aria-hidden="true">
             <div class="modal-dialog">
@@ -72,6 +71,7 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
                         <h5>Contatos</h5>
                         <ul id="listaContatos" class="list-group"></ul>
 
+
                         <h5 class="mt-4">Adicionar Contato</h5>
                         <select id="novoContato" class="form-select">
                             <option value="">Selecione um contato</option>
@@ -82,8 +82,6 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
         <!-- Fim do Modal de Detalhes do Usuário -->
-
-
 
         <!-- Modal de exclusão -->
         <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
@@ -106,6 +104,33 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
         <!-- Fim do Modal de exclusão -->
 
         <script>
+            $(document).on("click", ".remover-contato", function() {
+                let usuarioId = $("#detalheNome").data("id");
+                let contatoId = $(this).data("id");
+
+                if (!confirm("Tem certeza que deseja remover este contato?")) return;
+
+                $.ajax({
+                    url: "usuarios/deletar_contatos.php",
+                    type: "POST",
+                    data: {
+                        usuario_id: usuarioId,
+                        contato_id: contatoId
+                    },
+                    success: function(response) {
+                        response = JSON.parse(response);
+                        if (response.success) {
+                            $(".usuario-nome[data-id='" + usuarioId + "']").click();
+                        } else {
+                            alert("Erro: " + response.message);
+                        }
+                    },
+                    error: function() {
+                        alert("Erro ao remover o contato.");
+                    }
+                });
+            });
+
             $(document).ready(function() {
                 $(".usuario-nome").click(function() {
                     let userId = $(this).data("id");
@@ -126,7 +151,12 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
                             $("#listaContatos").empty();
                             if (response.contatos.length > 0) {
                                 response.contatos.forEach(function(contato) {
-                                    $("#listaContatos").append(`<li class="list-group-item">${contato.nome} - ${contato.telefone}</li>`);
+                                    $("#listaContatos").append(`
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    ${contato.nome} - ${contato.telefone}
+                                    <button class="btn btn-danger btn-sm remover-contato" data-id="${contato.id}" data-usuario-id="${response.usuario_id}">Excluir</button>
+                                </li>
+                            `);
                                 });
                             } else {
                                 $("#listaContatos").append("<li class='list-group-item text-muted'>Nenhum contato encontrado</li>");
@@ -141,6 +171,7 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
 
                             // Abre a modal
                             $("#detalhesUsuarioModal").modal("show");
+
                         },
                         error: function() {
                             alert("Erro ao carregar os detalhes do usuário.");
@@ -148,7 +179,6 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
                     });
                 });
             });
-
 
             // Evento de adicionar contato
             $("#salvarContato").click(function() {
@@ -180,10 +210,6 @@ $usuarios = $result->fetchAll(PDO::FETCH_ASSOC);
                     }
                 });
             });
-
-
-
-
 
             $("#novoContato").html(selectHtml);
         </script>
